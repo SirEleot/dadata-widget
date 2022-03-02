@@ -1,4 +1,6 @@
-# dadata-widget
+# dadata-widget 
+Пример виджета: https://dadata.uniq-rp.com/
+
 Добавление на сайт:
 1. Добавить перед закрывающим тегом </body> слкдущее:
 ```html
