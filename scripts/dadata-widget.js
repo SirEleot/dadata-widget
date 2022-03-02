@@ -43,11 +43,18 @@ class DadataWidget extends HTMLElement{
         }, "");
     }
 
+    /**
+     * Обработка ошибок запроса к серверу api
+     */
     handleSearchError(error){
         console.log("error:", error);
         this.isLoading = false;               
         this.updateSerachResults();
     }
+
+    /**
+     * обработка успешного ответа запроса к серверу api
+     */
     handleSearchSuccess(result){
         this.searchResults = result.suggestions.map(suggestion => {
             const fieldData = {};
@@ -59,6 +66,10 @@ class DadataWidget extends HTMLElement{
         this.isLoading = false;               
         this.updateSerachResults();
     }
+
+    /**
+     * обновление списка найденых по запросу данных
+     */
     updateSerachResults(){
         const serchResults = this.querySelector("#search_results");
         let html = "";
@@ -71,6 +82,10 @@ class DadataWidget extends HTMLElement{
         
         serchResults.innerHTML = html;
     }
+
+    /**
+     * запрос к серверу апи для получения списка организаций согласно введенных данных
+     */
     async search(e){
         this.query = e.target.value;
         if(this.query){
@@ -96,6 +111,9 @@ class DadataWidget extends HTMLElement{
         }
     }
     
+    /**
+     * действи при клике на конкретной организации из списка результатов поиска
+     */
     selectSuggestion(e){        
         const el = document.elementFromPoint(e.clientX, e.clientY);
         if(el.getAttribute("name") === "search_result"){           
