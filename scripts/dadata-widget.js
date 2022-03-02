@@ -106,8 +106,8 @@ class DadataWidget extends HTMLElement{
                     input.value = "";
                     let event = new Event("input");
                     input.dispatchEvent(event);
-                }
-                input.value = selected[field.name];
+                }else
+                    input.value = selected[field.name];
             });
         }
     }
