@@ -15,6 +15,7 @@ dadata-widget{
     position: relative;
     border-radius: 5px;
     overflow: hidden;
+    background-color: #fff;
 }
 .dadata-widget__title{
     height: 30px;
@@ -62,11 +63,10 @@ dadata-widget{
     background-color: #EF000055;
 }
 
-.container{
-    width: 100vw;
-    height: 100vh;
+.dadata-widget__test-container{
+    margin: 0 auto;
+    height: 100%;
     display: flex;
-    align-items: center;
     justify-content: center;
-    border: 1px solid #000;
+    width: min(100%, 1200px);
 }

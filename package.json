@@ -1,0 +1,25 @@
+{
+  "name": "dadata-widget",
+  "version": "1.0.0",
+  "description": "test task from dadata.ru",
+  "main": "scripts/dadata-widget.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "start": "webpack --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SirEleot/dadata-widget.git"
+  },
+  "author": "SirEleot",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SirEleot/dadata-widget/issues"
+  },
+  "homepage": "https://github.com/SirEleot/dadata-widget#readme",
+  "devDependencies": {
+    "webpack": "^5.69.1",
+    "webpack-cli": "^4.9.2"
+  }
+}
