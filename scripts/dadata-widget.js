@@ -5,7 +5,6 @@ class DadataWidget extends HTMLElement{
         super();
         this.searchResults = null;
         this.query = null;
-        this.inputList = [];
         this.isLoading = false;
         this.apiUrl = this.getAttribute("apiUrl") || "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/party";
         this.token = this.getAttribute("token") || "2691faa57672075492c50f83678c714c316021b2";
@@ -20,8 +19,7 @@ class DadataWidget extends HTMLElement{
         title.classList.add("dadata-widget__title");
         title.innerHTML = this.title;
         this.appendChild(title);
-        const form = this.initForm();
-        this.appendChild(form);
+        this.initForm();
     }
    
     /**
@@ -36,18 +34,8 @@ class DadataWidget extends HTMLElement{
             const fieldBody = document.createElement('div');
             fieldBody.classList.add("dadata-widget__form_field");
 
-            const fieldInput = document.createElement('input');
-            fieldInput.classList.add("dadata-widget__form_input");
-            fieldInput.id = `dadata_${field.name}`;
-            fieldInput.setAttribute("type", field.type);
-            fieldInput.setAttribute("name", field.name);
-            fieldInput.setAttribute("placeholder", field.placeholder);
-            this.inputList.push(fieldInput);
-
-            const fieldLabel = document.createElement('label');
-            fieldLabel.innerText = field.label;
-            fieldLabel.classList.add("dadata-widget__form_label");
-            fieldLabel.setAttribute("for", `dadata_${field.name}`);
+            const fieldInput = this.createInputElement(field);
+            const fieldLabel = this.createLabelElement(field);
 
             fieldBody.appendChild(fieldLabel);
             fieldBody.appendChild(fieldInput);
@@ -59,8 +47,32 @@ class DadataWidget extends HTMLElement{
                 fieldBody.appendChild(this.searchResults);
             }
             form.appendChild(fieldBody);
-        });      
-        return form;
+        });
+        this.appendChild(form);
+    }
+
+    /**
+     * создаеит элемент ввода
+     */
+    createInputElement(fieldData){
+        const fieldInput = document.createElement('input');
+        fieldInput.classList.add("dadata-widget__form_input");
+        fieldInput.id = `dadata_${fieldData.name}`;
+        fieldInput.setAttribute("type", fieldData.type);
+        fieldInput.setAttribute("name", fieldData.name);
+        fieldInput.setAttribute("placeholder", fieldData.placeholder);
+        return fieldInput;
+    } 
+    
+    /**
+    * создает label элемент
+    */
+    createLabelElement(fieldData){
+            const fieldLabel = document.createElement('label');
+            fieldLabel.innerText = fieldData.label;
+            fieldLabel.classList.add("dadata-widget__form_label");
+            fieldLabel.setAttribute("for", `dadata_${fieldData.name}`);
+            return fieldLabel;
     }
 
     /**
