@@ -3,9 +3,10 @@ import fields from './fields.js'
 class DadataWidget extends HTMLElement{
     constructor() {
         super();
-        this.searchResults = [];
+        this.searchResults = null;
+        this.query = null;
+        this.inputList = [];
         this.isLoading = false;
-        this.query = "";
         this.apiUrl = this.getAttribute("apiUrl") || "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/party";
         this.token = this.getAttribute("token") || "2691faa57672075492c50f83678c714c316021b2";
         this.title = this.getAttribute("title") || "Dadata.ru";
@@ -15,32 +16,51 @@ class DadataWidget extends HTMLElement{
 
     connectedCallback(){
         this.style = `min-width:min(100%,${this.width});width:min(100%,${this.width});height:${this.height};`;
-        this.innerHTML = `
-            <div class="dadata-widget__title">${this.title}</div>
-            <form class="dadata-widget__form" name="dadata">
-                ${this.parseFields()}              
-            </form>
-        `;
-        const query = this.querySelector("[name='query']");
-        if(query) {
-            query.addEventListener("input", this.search.bind(this));
-        }
-        this.addEventListener("click", this.selectSuggestion.bind(this));
+        const title = document.createElement('div');
+        title.classList.add("dadata-widget__title");
+        title.innerHTML = this.title;
+        this.appendChild(title);
+        const form = this.initForm();
+        this.appendChild(form);
     }
    
-    parseFields(){
-        return fields.reduce((previous, current)=>{
-            let result =  previous + `
-                <div class="dadata-widget__form_field">
-                    <label for="dadata_${current.name}" class="dadata-widget__form_label">${current.label}</label> <br>
-                    <input type="${current.type}" name="${current.name}" id="dadata_${current.name}"  class="dadata-widget__form_input" placeholder="${current.placeholder}">
-            `
-            if(current.name === "query"){
-                result += `<div id="search_results"></div>`;
+    /**
+     * Инициализация формы
+    */
+    initForm(){        
+        const form = document.createElement('form');        
+        form.classList.add("dadata-widget__form");
+        form.setAttribute("name", "dadata");
+        fields.forEach(field => {
+
+            const fieldBody = document.createElement('div');
+            fieldBody.classList.add("dadata-widget__form_field");
+
+            const fieldInput = document.createElement('input');
+            fieldInput.classList.add("dadata-widget__form_input");
+            fieldInput.id = `dadata_${field.name}`;
+            fieldInput.setAttribute("type", field.type);
+            fieldInput.setAttribute("name", field.name);
+            fieldInput.setAttribute("placeholder", field.placeholder);
+            this.inputList.push(fieldInput);
+
+            const fieldLabel = document.createElement('label');
+            fieldLabel.innerText = field.label;
+            fieldLabel.classList.add("dadata-widget__form_label");
+            fieldLabel.setAttribute("for", `dadata_${field.name}`);
+
+            fieldBody.appendChild(fieldLabel);
+            fieldBody.appendChild(fieldInput);
+            if(field.name === "query"){
+                fieldInput.addEventListener("input", this.search.bind(this));
+                this.query = fieldInput;                
+                this.searchResults = document.createElement('div');
+                this.searchResults.id = "search_results";
+                fieldBody.appendChild(this.searchResults);
             }
-            result += "</div>";
-            return result;
-        }, "");
+            form.appendChild(fieldBody);
+        });      
+        return form;
     }
 
     /**
@@ -56,7 +76,7 @@ class DadataWidget extends HTMLElement{
      * обработка успешного ответа запроса к серверу api
      */
     handleSearchSuccess(result){
-        this.searchResults = result.suggestions.map(suggestion => {
+        const data = result.suggestions.map(suggestion => {
             const fieldData = {};
             fields.forEach(field => {
                 fieldData[field.name] = field.getDataFromSuggestion(suggestion);
@@ -64,31 +84,34 @@ class DadataWidget extends HTMLElement{
             return fieldData;
         })
         this.isLoading = false;               
-        this.updateSerachResults();
+        this.updateSerachResults(data);
     }
 
     /**
      * обновление списка найденых по запросу данных
      */
-    updateSerachResults(){
-        const serchResults = this.querySelector("#search_results");
-        let html = "";
-        if(this.searchResults.length > 0){
-            this.searchResults.forEach(result => {
-                html += `<div class="dadata-widget__form_serch-result" name="search_result">${result.query}</div>`
+    updateSerachResults(suggestionsData){
+        if(!this.searchResults) return;
+        this.searchResults.innerHTML = "";
+        if(suggestionsData){
+            suggestionsData.forEach(suggestion => {
+                const suggestionElement = document.createElement("div");
+                suggestionElement.suggestion = suggestion;
+                suggestionElement.classList.add("dadata-widget__form_serch-result");
+                suggestionElement.innerText = suggestion.query;
+                suggestionElement.addEventListener("click", this.selectSuggestion.bind(this));
+                this.searchResults.appendChild(suggestionElement);
             });
+            
         }
-        serchResults.style.display = html ? "block" : "none";
-        
-        serchResults.innerHTML = html;
+        this.searchResults.style.display = suggestionsData ? "block" : "none";
     }
 
     /**
      * запрос к серверу апи для получения списка организаций согласно введенных данных
      */
     async search(e){
-        this.query = e.target.value;
-        if(this.query){
+        if(this.query.value){
             if(this.isLoading) return;
             const options = {
                 method: "POST",
@@ -98,35 +121,31 @@ class DadataWidget extends HTMLElement{
                     "Accept": "application/json",
                     "Authorization": "Token " + this.token
                 },
-                body: JSON.stringify({query: this.query})
+                body: JSON.stringify({query: this.query.value})
             }
             this.isLoading = true;
             fetch(this.apiUrl, options)          
                 .then(response => response.json())
                     .then(this.handleSearchSuccess.bind(this))
                 .catch(this.handleSearchError.bind(this));
-        }else {
-            this.searchResults = [];            
+        }else           
             this.updateSerachResults();
-        }
     }
     
     /**
      * действи при клике на конкретной организации из списка результатов поиска
      */
-    selectSuggestion(e){        
-        const el = document.elementFromPoint(e.clientX, e.clientY);
-        if(el.getAttribute("name") === "search_result"){           
-            const selected = this.searchResults.find(result=>result.query == el.innerHTML);
-            fields.forEach(field => {
-                const input = this.querySelector(`[name="${field.name}"]`)
-                if(field.name === "query"){
-                    input.value = "";
-                    let event = new Event("input");
-                    input.dispatchEvent(event);
-                }else
-                    input.value = selected[field.name];
-            });
+    selectSuggestion(e){
+        for (const key in e.target.suggestion) {
+            const el = this.querySelector(`#dadata_${key}`);
+            if(el){
+                if(key === "query"){
+                    el.value = "";
+                    const event = new Event("input");
+                    el.dispatchEvent(event); 
+                }else 
+                    el.value = e.target.suggestion[key] 
+            }
         }
     }
 }
